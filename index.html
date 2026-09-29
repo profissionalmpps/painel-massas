@@ -2,7 +2,6 @@
 <html lang="pt-PT">
 <head>
 <meta charset="utf-8">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -12,19 +11,18 @@
   * { box-sizing:border-box; margin:0; }
   html,body { height:100%; }
   body { padding:2vh 3vw; overflow:hidden; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
-  .quadro { height:100%; display:flex; flex-direction:column; padding:2vh 2.5vw 1.2vh; }
+  .quadro { height:100%; display:flex; flex-direction:column; padding:2vh 2.5vw 1.2vh; overflow:hidden; }
   h1 { text-align:center; line-height:1.08; text-transform:uppercase; font-size:5vh; font-size:clamp(24px,5.2vh,70px); }
   .sub { display:flex; align-items:center; margin:1.4vh 0 1.8vh; text-transform:uppercase; font-size:2.1vh; font-size:clamp(13px,2.1vh,28px); }
   .sub span { padding:0 2vw; }
   .sub::before,.sub::after { content:""; flex:1; }
-  .grid { flex:1; display:flex; flex-wrap:wrap; justify-content:space-between; align-content:space-between; min-height:0; }
-  .item { position:relative; width:32%; height:31.5%; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1vh; min-height:0; }
-  @supports (display:grid) {
-    .grid { display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:1.4vh 1.6vw; }
-    .item { width:auto; height:auto; }
-  }
+  .grid { flex:1; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); gap:1.4vh 1.6vw; min-height:0; }
+  .item { position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1vh; min-height:0; }
+  /* Navegadores sem CSS grid (iPad antigo): o JavaScript define as alturas */
+  body.sem-grid .grid { gap:0; display:flex; flex-wrap:wrap; justify-content:space-between; align-content:flex-start; overflow:hidden; }
+  body.sem-grid .item { width:32%; }
   .foto { flex:1; min-height:0; width:100%; display:flex; align-items:center; justify-content:center; }
-  .foto img { max-width:96%; max-height:100%; object-fit:contain; mix-blend-mode:multiply; }
+  .foto img { max-width:96%; max-height:100%; object-fit:contain; mix-blend-mode:multiply; -webkit-filter:brightness(1.05) contrast(1.06); filter:brightness(1.05) contrast(1.06); }
   .vazio { display:none; width:50%; height:75%; border-radius:50%; background:#ecebe8; border:2px dashed #b9b6b0; align-items:center; justify-content:center; font-weight:700; color:#8a8680; font-size:5vh; }
   .item.sem-foto img { display:none; } .item.sem-foto .vazio { display:flex; }
   .nome { text-align:center; padding:.6vh .5vw 0; line-height:1.15; max-width:100%; overflow-wrap:break-word; font-size:2.5vh; font-size:clamp(14px,2.5vh,34px); }
@@ -64,11 +62,11 @@
 
 // Caixas pretas à volta de cada massa: true = com caixas, false = sem caixas.
 // Para comparar sem editar: abrir a página com  ?caixas=sim  ou  ?caixas=nao
-var CAIXAS = false;
+var CAIXAS = true;
 
 // Ligação CSV da folha de cálculo publicada (Ficheiro > Partilhar > Publicar na Web > CSV).
 // Sem ligação, a página NÃO lê o ficheiro planilha-massas.csv do computador.
-var SHEET_URL = "https://docs.google.com/spreadsheets/d/1cWNIOZcYu9YA9mqWr_eKesJS-6WD6EjK3Dunko_bflY/edit?usp=sharing";
+var SHEET_URL = "";
 
 // De quanto em quanto tempo verifica a folha (minutos)
 var MINUTOS = 3;
@@ -96,6 +94,8 @@ function param(nome) {
 if (param("caixas")) CAIXAS = !/^(nao|não|n|0|false)$/i.test(param("caixas"));
 if (param("csv")) SHEET_URL = param("csv");
 document.body.className = "tema-restaurante" + (CAIXAS ? "" : " sem-caixas");
+var SEM_GRID = !(window.CSS && CSS.supports && CSS.supports("display", "grid")) || !!param("antigo");
+if (SEM_GRID) document.body.className += " sem-grid";
 
 var CHAVE = "massas-estado-v4", elementos = {}, estado = {}, EXT = ["png", "jpg", "svg"];
 function guardar() { try { localStorage.setItem(CHAVE, JSON.stringify(estado)); } catch (e) {} }
@@ -164,7 +164,24 @@ if (param("off")) {
   var lista = param("off").split(",");
   MASSAS.forEach(function (m) { estado[m.n] = lista.indexOf(String(m.n)) === -1; });
 }
-desenhar(); atualizar();
+// Só em navegadores antigos: divide a altura disponível em 3 linhas iguais
+function ajustar() {
+  if (!SEM_GRID) return;
+  var g = document.getElementById("grid"), gh = g.clientHeight, gap = Math.round(window.innerHeight * 0.014);
+  var h = Math.floor((gh - 2 * gap) / 3), it = g.children;
+  for (var i = 0; i < it.length; i++) {
+    var foto = it[i].getElementsByClassName("foto")[0], nome = it[i].getElementsByClassName("nome")[0];
+    it[i].style.height = h + "px";
+    it[i].style.marginBottom = (i < 6 ? gap : 0) + "px";
+    foto.style.flex = "none";
+    foto.style.height = Math.max(h - nome.offsetHeight - 14, 40) + "px";
+  }
+}
+window.onresize = window.onorientationchange = ajustar;
+window.onload = ajustar;
+setTimeout(ajustar, 600);
+
+desenhar(); atualizar(); ajustar();
 setInterval(atualizar, MINUTOS * 60 * 1000);
 </script>
 </body>
