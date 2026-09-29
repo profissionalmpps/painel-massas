@@ -77,7 +77,7 @@ var MOLDURA = false;
 var SHEET_URL = "https://docs.google.com/spreadsheets/d/1cWNIOZcYu9YA9mqWr_eKesJS-6WD6EjK3Dunko_bflY/edit?usp=sharing";
 
 // De quanto em quanto tempo verifica a folha (minutos)
-var MINUTOS = 1;
+var MINUTOS = 3;
 
 // As fotos ficam na pasta img/ com o número da massa (1.png, 2.png ...).
 // A página procura por esta ordem: .jpg, .png. Sem imagem, mostra um círculo com o número.
@@ -157,6 +157,10 @@ function hora() { var d = new Date(); return ("0" + d.getHours()).slice(-2) + ":
 
 function atualizar() {
   if (!SHEET_URL) return;
+  if (/^https?:/.test(SHEET_URL) && !/output=csv|format=csv|out:csv/.test(SHEET_URL)) {
+    infoEl.textContent = "link da planilha incorreto: use Publicar na Web > CSV";
+    return;
+  }
   var xhr = new XMLHttpRequest();
   xhr.open("GET", SHEET_URL + (SHEET_URL.indexOf("?") > -1 ? "&" : "?") + "t=" + new Date().getTime(), true);
   xhr.timeout = 15000;
@@ -165,6 +169,8 @@ function atualizar() {
     if (novo) {
       MASSAS.forEach(function (m) { if (novo.hasOwnProperty(m.n)) estado[m.n] = novo[m.n]; });
       guardar(); desenhar(); infoEl.textContent = "atualizado às " + hora();
+    } else if (xhr.status === 200 && /^\s*</.test(xhr.responseText)) {
+      infoEl.textContent = "o link abre uma página, não o CSV: use Publicar na Web > CSV";
     } else infoEl.textContent = "sem atualização (a mostrar o último estado)";
   };
   xhr.onerror = xhr.ontimeout = function () { infoEl.textContent = "sem ligação à internet (a mostrar o último estado)"; };
