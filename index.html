@@ -77,10 +77,10 @@ var MOLDURA = false;
 var SHEET_URL = "https://docs.google.com/spreadsheets/d/1cWNIOZcYu9YA9mqWr_eKesJS-6WD6EjK3Dunko_bflY/edit?usp=sharing";
 
 // De quanto em quanto tempo verifica a folha (minutos)
-var MINUTOS = 1;
+var MINUTOS = 3;
 
 // As fotos ficam na pasta img/ com o número da massa (1.png, 2.png ...).
-// A página procura por esta ordem: .png, .jpg, .svg (os desenhos incluídos).
+// A página procura por esta ordem: .jpg, .png. Sem imagem, mostra um círculo com o número.
 var MASSAS = [
   { n:1, nome:"Fusilli Tricolor",    disponivel:true },
   { n:2, nome:"Fusilli",             disponivel:true },
@@ -106,7 +106,7 @@ document.body.className = "tema-restaurante" + (CAIXAS ? "" : " sem-caixas") + (
 var SEM_GRID = !(window.CSS && CSS.supports && CSS.supports("display", "grid")) || !!param("antigo");
 if (SEM_GRID) document.body.className += " sem-grid";
 
-var CHAVE = "massas-estado-v4", elementos = {}, estado = {}, EXT = ["png", "jpg", "svg"];
+var CHAVE = "massas-estado-v4", elementos = {}, estado = {}, EXT = ["jpg", "png"];
 function guardar() { try { localStorage.setItem(CHAVE, JSON.stringify(estado)); } catch (e) {} }
 var salvo = null;
 try { salvo = JSON.parse(localStorage.getItem(CHAVE)); } catch (e) {}
@@ -195,6 +195,11 @@ setTimeout(ajustar, 600); setTimeout(ajustar, 2500); setTimeout(ajustar, 6000);
 
 desenhar(); atualizar(); ajustar();
 setInterval(atualizar, MINUTOS * 60 * 1000);
+
+// Modo offline: guarda a página e as imagens no aparelho (precisa de HTTPS e de um navegador recente)
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });
+}
 </script>
 </body>
 </html>
