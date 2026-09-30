@@ -164,7 +164,7 @@ function atualizar() {
     var novo = (xhr.status === 200 || xhr.status === 0) ? lerCSV(xhr.responseText) : null;
     if (novo) {
       MASSAS.forEach(function (m) { if (novo.hasOwnProperty(m.n)) estado[m.n] = novo[m.n]; });
-      guardar(); desenhar(); infoEl.textContent = "atualizado às " + hora();
+      guardar(); desenhar(); infoEl.textContent = "Desenvolvido por Marcos Silva - Atualizado às " + hora();
     } else infoEl.textContent = "Desenvolvido por Marcos Silva - Sem atualização (a mostrar o último estado)";
   };
   xhr.onerror = xhr.ontimeout = function () { infoEl.textContent = "Desenvolvido por Marcos Silva - Sem ligação à internet (a mostrar o último estado)"; };
