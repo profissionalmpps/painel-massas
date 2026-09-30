@@ -165,9 +165,9 @@ function atualizar() {
     if (novo) {
       MASSAS.forEach(function (m) { if (novo.hasOwnProperty(m.n)) estado[m.n] = novo[m.n]; });
       guardar(); desenhar(); infoEl.textContent = "atualizado às " + hora();
-    } else infoEl.textContent = "sem atualização (a mostrar o último estado)";
+    } else infoEl.textContent = "Desenvolvido por Marcos Silva - Sem atualização (a mostrar o último estado)";
   };
-  xhr.onerror = xhr.ontimeout = function () { infoEl.textContent = "sem ligação à internet (a mostrar o último estado)"; };
+  xhr.onerror = xhr.ontimeout = function () { infoEl.textContent = "Desenvolvido por Marcos Silva - Sem ligação à internet (a mostrar o último estado)"; };
   xhr.send();
 }
 
